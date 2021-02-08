@@ -533,7 +533,8 @@ class HorizontalViscosityTerm(ShallowWaterMomentumTerm):
             return 0
 
         n = self.normal
-        h = self.cellsize
+        # h = self.cellsize
+        h = Constant(100.)  # HACK
 
         if self.options.use_grad_div_viscosity_term:
             stress = nu*2.*sym(grad(uv))
