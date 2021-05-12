@@ -686,7 +686,7 @@ class ModelOptions2d(CommonModelOptions):
         self.tracer_metadata = {}
         super(ModelOptions2d, self).__init__(*args, **kwargs)
 
-    def add_tracer_2d(self, label, name, filename, shortname=None, unit='-', source=None):
+    def add_tracer_2d(self, label, name, filename, shortname=None, unit='-', **kwargs):
         """
         Define a 2D tracer field
 
@@ -696,15 +696,19 @@ class ModelOptions2d(CommonModelOptions):
         :kwarg shortname: short version of name, e.g. 'Tracer'
         :kwarg unit: units for field, e.g. '-'
         :kwarg source: associated source term
+        :kwarg linear_reaction_coefficient: scaling for linear reaction term (if any)
         """
         assert ' ' not in label, "Labels cannot contain spaces"
         assert ' ' not in filename, "Filenames cannot contain spaces"
+        source = kwargs.get('source')                      # TODO: Validate input
+        gamma = kwargs.get('linear_reaction_coefficient')  # TODO: Validate input
         self.tracer_metadata[label] = {
             'name': name,
             'shortname': shortname or name,
             'unit': unit,
             'filename': filename,
-            'source': source,  # TODO: Validate input
+            'source': source,
+            'linear_reaction_coefficient': gamma,
         }
 
 

@@ -457,12 +457,14 @@ class FlowSolver2d(FrozenClass):
         """
         Gets tracer timestepper object with appropriate parameters
         """
+        md = self.options.tracer_metadata[label]
         uv, elev = self.fields.solution_2d.split()
         fields = {
             'elev_2d': elev,
             'uv_2d': uv,
             'diffusivity_h': self.options.horizontal_diffusivity,
-            'source': self.options.tracer_metadata[label].get('source'),
+            'source': md.get('source'),
+            'linear_reaction_coefficient': md.get('linear_reaction_coefficient'),
             'lax_friedrichs_tracer_scaling_factor': self.options.lax_friedrichs_tracer_scaling_factor,
             'tracer_advective_velocity_factor': self.options.tracer_advective_velocity_factor,
         }

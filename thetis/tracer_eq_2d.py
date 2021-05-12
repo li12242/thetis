@@ -22,6 +22,7 @@ __all__ = [
     'TracerTerm',
     'HorizontalAdvectionTerm',
     'HorizontalDiffusionTerm',
+    'LinearReactionTerm',
     'SourceTerm',
 ]
 
@@ -250,6 +251,26 @@ class HorizontalDiffusionTerm(TracerTerm):
         return -f
 
 
+class LinearReactionTerm(TracerTerm):
+    r"""
+    Generic linear reaction term
+
+    The weak form reads
+
+    .. math::
+        \int_\Omega \gamma T \phi dx
+
+    where :math:`\gamma` is a user defined scalar :class:`Function`.
+
+    """
+    def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
+        f = 0
+        gamma = fields_old.get('linear_reaction_coefficient')
+        if gamma is not None:
+            f += inner(gamma*solution, self.test)*self.dx
+        return -f
+
+
 class SourceTerm(TracerTerm):
     r"""
     Generic source term
@@ -272,7 +293,7 @@ class SourceTerm(TracerTerm):
 
 class TracerEquation2D(Equation):
     """
-    2D tracer advection-diffusion equation :eq:`tracer_eq` in conservative form
+    2D tracer advection-diffusion equation :eq:`tracer_eq` in non-conservative form
     """
     def __init__(self, function_space, depth, options, velocity):
         """
@@ -303,4 +324,5 @@ class TracerEquation2D(Equation):
     def add_terms(self, *args, **kwargs):
         self.add_term(HorizontalAdvectionTerm(*args, **kwargs), 'explicit')
         self.add_term(HorizontalDiffusionTerm(*args, **kwargs), 'explicit')
+        self.add_term(LinearReactionTerm(*args, **kwargs), 'explicit')
         self.add_term(SourceTerm(*args, **kwargs), 'source')
