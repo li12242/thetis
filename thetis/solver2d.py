@@ -347,6 +347,8 @@ class FlowSolver2d(FrozenClass):
         )
         self.equations.sw.bnd_functions = self.bnd_functions['shallow_water']
         uv_2d, elev_2d = self.fields.solution_2d.split()
+        self.options.use_limiter_for_tracers &= self.options.polynomial_degree > 0
+        self.options.use_limiter_for_tracers &= self.options.tracer_element_family == 'dg'
         if self.options.solve_tracer:
             if self.options.tracer_metadata == {}:
                 md = field_metadata['tracer_2d'].copy()
@@ -370,7 +372,8 @@ class FlowSolver2d(FrozenClass):
                                    shortname=md['shortname'],
                                    unit=md['unit'])
                 self.equations[label] = eq(*args)
-            if self.options.use_limiter_for_tracers and self.options.polynomial_degree > 0:
+
+            if self.options.use_limiter_for_tracers:
                 self.tracer_limiter = limiter.VertexBasedP1DGLimiter(self.function_spaces.Q_2d)
             else:
                 self.tracer_limiter = None
@@ -385,7 +388,7 @@ class FlowSolver2d(FrozenClass):
             self.equations.sediment = sediment_eq_2d.SedimentEquation2D(
                 self.function_spaces.Q_2d, self.depth, self.options, self.sediment_model,
                 conservative=sediment_options.use_sediment_conservative_form)
-            if self.options.use_limiter_for_tracers and self.options.polynomial_degree > 0:
+            if self.options.use_limiter_for_tracers:
                 self.tracer_limiter = limiter.VertexBasedP1DGLimiter(self.function_spaces.Q_2d)
             else:
                 self.tracer_limiter = None
@@ -461,20 +464,25 @@ class FlowSolver2d(FrozenClass):
 
         # Process reaction coefficients
         lin_react_coeff = 0
-        print(md)
-        for label, value in md.get('linear_reaction_coefficients').items():
-            if label in md:
-                lin_react_coeff += value*self.fields[label]
-            elif label + '_sq' in md:
-                lin_react_coeff += value*self.fields[label]**2
+        for l, value in md.get('linear_reaction_coefficients').items():
+            assert l != label
+            if l == 'const':
+                lin_react_coeff = lin_react_coeff + value
+            elif l in self.options.tracer_metadata:
+                lin_react_coeff = lin_react_coeff + value*self.fields[l]
+            elif l[-3:] == '_sq' and l[:-3] in self.options.tracer_metadata:
+                lin_react_coeff = lin_react_coeff + value*self.fields[l[:-3]]**2
             else:
                 raise ValueError(f"Label {label} not recognised")
         quad_react_coeff = 0
-        for label, value in md.get('quadratic_reaction_coefficients').items():
-            if label in md:
-                quad_react_coeff += value*self.fields[label]
-            elif label + '_sq' in md:
-                quad_react_coeff += value*self.fields[label]**2
+        for l, value in md.get('quadratic_reaction_coefficients').items():
+            assert l != label
+            if l == 'const':
+                quad_react_coeff = quad_react_coeff + value
+            elif l in self.options.tracer_metadata:
+                quad_react_coeff = quad_react_coeff + value*self.fields[l]
+            elif l[-3:] == '_sq' and l[:-3] in self.options.tracer_metadata:
+                quad_react_coeff = quad_react_coeff + value*self.fields[l[:-3]]**2
             else:
                 raise ValueError(f"Label {label} not recognised")
 
@@ -482,7 +490,7 @@ class FlowSolver2d(FrozenClass):
         fields = {
             'elev_2d': elev,
             'uv_2d': uv,
-            'diffusivity_h': self.options.horizontal_diffusivity,
+            'diffusivity_h': md.get('horizontal_diffusivity') or self.options.horizontal_diffusivity,
             'source': md.get('source'),
             'linear_reaction_coefficient': lin_react_coeff,
             'quadratic_reaction_coefficient': quad_react_coeff,
@@ -819,8 +827,6 @@ class FlowSolver2d(FrozenClass):
         # TODO I think export function is obsolete as callbacks are in place
         if not self._initialized:
             self.initialize()
-
-        self.options.use_limiter_for_tracers &= self.options.polynomial_degree > 0
 
         t_epsilon = 1.0e-5
         cputimestamp = time_mod.perf_counter()

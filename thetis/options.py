@@ -698,6 +698,7 @@ class ModelOptions2d(CommonModelOptions):
         :kwarg source: associated source term
         :kwarg linear_reaction_coefficients: dictionary of scalings for linear reactions
         :kwarg quadratic_reaction_coefficients: dictionary of scalings for quadratic reactions
+        :kwarg horizontal_diffusivity: diffusion coefficient
         """
         assert ' ' not in label, "Labels cannot contain spaces"
         assert ' ' not in filename, "Filenames cannot contain spaces"
@@ -706,6 +707,7 @@ class ModelOptions2d(CommonModelOptions):
         assert isinstance(gamma, dict), f"Expected dict, not {type(gamma)}"
         kappa = kwargs.get('quadratic_reaction_coefficients', {})
         assert isinstance(kappa, dict), f"Expected dict, not {type(kappa)}"
+        D = kwargs.get('horizontal_diffusivity')  # TODO: Validate input
         self.tracer_metadata[label] = {
             'name': name,
             'shortname': shortname or name,
@@ -714,6 +716,7 @@ class ModelOptions2d(CommonModelOptions):
             'source': source,
             'linear_reaction_coefficients': gamma,
             'quadratic_reaction_coefficients': kappa,
+            'horizontal_diffusivity': D,
         }
 
 

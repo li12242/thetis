@@ -35,7 +35,8 @@ class CoupledTimeIntegrator2D(timeintegrator.TimeIntegratorBase):
         self.fields = solver.fields
         self.timesteppers = AttrDict()
         print_output('Coupled time integrator: {:}'.format(self.__class__.__name__))
-        print_output('  Shallow Water time integrator: {:}'.format(self.swe_integrator.__name__))
+        if not self.options.tracer_only:
+            print_output('  Shallow Water time integrator: {:}'.format(self.swe_integrator.__name__))
         if self.options.solve_tracer:
             print_output('  Tracer time integrator: {:}'.format(self.tracer_integrator.__name__))
         if self.options.sediment_model_options.solve_suspended_sediment:
