@@ -696,12 +696,14 @@ class ModelOptions2d(CommonModelOptions):
         :kwarg shortname: short version of name, e.g. 'Tracer'
         :kwarg unit: units for field, e.g. '-'
         :kwarg source: associated source term
-        :kwarg linear_reaction_coefficient: scaling for linear reaction term (if any)
+        :kwarg linear_reaction_coefficient: scaling for linear reaction term
+        :kwarg quadratic_reaction_coefficient: scaling for quadratic reaction term
         """
         assert ' ' not in label, "Labels cannot contain spaces"
         assert ' ' not in filename, "Filenames cannot contain spaces"
-        source = kwargs.get('source')                      # TODO: Validate input
-        gamma = kwargs.get('linear_reaction_coefficient')  # TODO: Validate input
+        source = kwargs.get('source')                         # TODO: Validate input
+        gamma = kwargs.get('linear_reaction_coefficient')     # TODO: Validate input
+        kappa = kwargs.get('quadratic_reaction_coefficient')  # TODO: Validate input
         self.tracer_metadata[label] = {
             'name': name,
             'shortname': shortname or name,
@@ -709,6 +711,7 @@ class ModelOptions2d(CommonModelOptions):
             'filename': filename,
             'source': source,
             'linear_reaction_coefficient': gamma,
+            'quadratic_reaction_coefficient': kappa,
         }
 
 

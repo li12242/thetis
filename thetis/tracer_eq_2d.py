@@ -22,8 +22,9 @@ __all__ = [
     'TracerTerm',
     'HorizontalAdvectionTerm',
     'HorizontalDiffusionTerm',
-    'LinearReactionTerm',
     'SourceTerm',
+    'LinearReactionTerm',
+    'QuadraticReactionTerm',
 ]
 
 
@@ -251,26 +252,6 @@ class HorizontalDiffusionTerm(TracerTerm):
         return -f
 
 
-class LinearReactionTerm(TracerTerm):
-    r"""
-    Generic linear reaction term
-
-    The weak form reads
-
-    .. math::
-        \int_\Omega \gamma T \phi dx
-
-    where :math:`\gamma` is a user defined scalar :class:`Function`.
-
-    """
-    def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
-        f = 0
-        gamma = fields_old.get('linear_reaction_coefficient')
-        if gamma is not None:
-            f += inner(gamma*solution, self.test)*self.dx
-        return -f
-
-
 class SourceTerm(TracerTerm):
     r"""
     Generic source term
@@ -281,13 +262,50 @@ class SourceTerm(TracerTerm):
         F_s = \int_\Omega \sigma \phi dx
 
     where :math:`\sigma` is a user defined scalar :class:`Function`.
-
     """
     def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
         f = 0
         source = fields_old.get('source')
         if source is not None:
             f += -inner(source, self.test)*self.dx
+        return -f
+
+
+class LinearReactionTerm(TracerTerm):
+    r"""
+    Generic linear reaction term
+
+    The weak form reads
+
+    .. math::
+        \int_\Omega \gamma T \phi dx
+
+    where :math:`\gamma` is a user defined scalar :class:`Function`.
+    """
+    def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
+        f = 0
+        gamma = fields_old.get('linear_reaction_coefficient')
+        if gamma is not None:
+            f += inner(gamma*solution, self.test)*self.dx
+        return -f
+
+
+class QuadraticReactionTerm(TracerTerm):
+    r"""
+    Generic quadratic reaction term
+
+    The weak form reads
+
+    .. math::
+        \int_\Omega \kappa T^2 \phi dx
+
+    where :math:`\kappa` is a user defined scalar :class:`Function`.
+    """
+    def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
+        f = 0
+        kappa = fields_old.get('quadratic_reaction_coefficient')
+        if kappa is not None:
+            f += inner(kappa*solution**2, self.test)*self.dx
         return -f
 
 
@@ -324,5 +342,6 @@ class TracerEquation2D(Equation):
     def add_terms(self, *args, **kwargs):
         self.add_term(HorizontalAdvectionTerm(*args, **kwargs), 'explicit')
         self.add_term(HorizontalDiffusionTerm(*args, **kwargs), 'explicit')
-        self.add_term(LinearReactionTerm(*args, **kwargs), 'explicit')
         self.add_term(SourceTerm(*args, **kwargs), 'source')
+        self.add_term(LinearReactionTerm(*args, **kwargs), 'explicit')
+        self.add_term(QuadraticReactionTerm(*args, **kwargs), 'explicit')

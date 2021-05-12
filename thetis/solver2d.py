@@ -465,6 +465,7 @@ class FlowSolver2d(FrozenClass):
             'diffusivity_h': self.options.horizontal_diffusivity,
             'source': md.get('source'),
             'linear_reaction_coefficient': md.get('linear_reaction_coefficient'),
+            'quadratic_reaction_coefficient': md.get('quadratic_reaction_coefficient'),
             'lax_friedrichs_tracer_scaling_factor': self.options.lax_friedrichs_tracer_scaling_factor,
             'tracer_advective_velocity_factor': self.options.tracer_advective_velocity_factor,
         }
