@@ -352,12 +352,11 @@ class FlowSolver2d(FrozenClass):
                 md = field_metadata['tracer_2d'].copy()
                 md['source'] = self.options.tracer_source_2d
                 self.options.tracer_metadata['tracer_2d'] = md
-                self.add_new_field(Function(self.function_spaces.Q_2d, name='tracer_2d'),
-                                   'tracer_2d',
-                                   md['name'],
-                                   md['filename'],
-                                   shortname=md['shortname'],
-                                   unit=md['unit'])
+                self.options.add_tracer_2d('tracer_2d',
+                                           md['name'],
+                                           md['filename'],
+                                           shortname=md['shortname'],
+                                           unit=md['unit'])
             args = (self.function_spaces.Q_2d, self.depth, self.options, uv_2d)
             if self.options.use_tracer_conservative_form:
                 eq = conservative_tracer_eq_2d.ConservativeTracerEquation2D
@@ -459,13 +458,34 @@ class FlowSolver2d(FrozenClass):
         """
         md = self.options.tracer_metadata[label]
         uv, elev = self.fields.solution_2d.split()
+
+        # Process reaction coefficients
+        lin_react_coeff = 0
+        print(md)
+        for label, value in md.get('linear_reaction_coefficients').items():
+            if label in md:
+                lin_react_coeff += value*self.fields[label]
+            elif label + '_sq' in md:
+                lin_react_coeff += value*self.fields[label]**2
+            else:
+                raise ValueError(f"Label {label} not recognised")
+        quad_react_coeff = 0
+        for label, value in md.get('quadratic_reaction_coefficients').items():
+            if label in md:
+                quad_react_coeff += value*self.fields[label]
+            elif label + '_sq' in md:
+                quad_react_coeff += value*self.fields[label]**2
+            else:
+                raise ValueError(f"Label {label} not recognised")
+
+        # Compile fields dict
         fields = {
             'elev_2d': elev,
             'uv_2d': uv,
             'diffusivity_h': self.options.horizontal_diffusivity,
             'source': md.get('source'),
-            'linear_reaction_coefficient': md.get('linear_reaction_coefficient'),
-            'quadratic_reaction_coefficient': md.get('quadratic_reaction_coefficient'),
+            'linear_reaction_coefficient': lin_react_coeff,
+            'quadratic_reaction_coefficient': quad_react_coeff,
             'lax_friedrichs_tracer_scaling_factor': self.options.lax_friedrichs_tracer_scaling_factor,
             'tracer_advective_velocity_factor': self.options.tracer_advective_velocity_factor,
         }

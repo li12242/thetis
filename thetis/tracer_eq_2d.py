@@ -285,7 +285,7 @@ class LinearReactionTerm(TracerTerm):
     def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
         f = 0
         gamma = fields_old.get('linear_reaction_coefficient')
-        if gamma is not None:
+        if gamma != 0:
             f += inner(gamma*solution, self.test)*self.dx
         return -f
 
@@ -304,7 +304,7 @@ class QuadraticReactionTerm(TracerTerm):
     def residual(self, solution, solution_old, fields, fields_old, bnd_conditions=None):
         f = 0
         kappa = fields_old.get('quadratic_reaction_coefficient')
-        if kappa is not None:
+        if kappa != 0:
             f += inner(kappa*solution**2, self.test)*self.dx
         return -f
 
