@@ -497,6 +497,8 @@ class FlowSolver2d(FrozenClass):
             'lax_friedrichs_tracer_scaling_factor': self.options.lax_friedrichs_tracer_scaling_factor,
             'tracer_advective_velocity_factor': self.options.tracer_advective_velocity_factor,
         }
+        for field, value in fields.items():
+            print(field, value)
 
         args = (self.equations[label], self.fields[label], fields, self.dt, )
         kwargs = dict(solver_parameters=self.options.timestepper_options.solver_parameters_tracer)
