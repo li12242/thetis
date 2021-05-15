@@ -1,19 +1,16 @@
 # 2D diffusion-reacton demo
 # =========================
 #
-# This demo shows how the PETSc diffusion-reaction equation demo
-# petsc/src/ts/tutorials/advection-diffusion-reaction/ex5.c
-# `demo <https://gitlab.com/petsc/petsc/-/blob/main/src/ts/tutorials/advection-diffusion-reaction/ex5.c>`__
+# This demo shows how the PETSc
+# `diffusion-reaction equation demo <https://gitlab.com/petsc/petsc/-/blob/main/src/ts/tutorials/advection-diffusion-reaction/ex5.c>`__
 # can be implemented in Thetis.
 #
 # In this example, the diffusion and reaction of two tracer fields
 # :math:`a` and :math:`b` are governed by the Gray-Scott model:
 #
-# ..math::
-#   \left\{\begin{array}{l}
-#       \frac{\partial a}{\partial t} - D_1\nabla a + ab^2 + \gamma a = \gamma
-#       \frac{\partial b}{\partial t} - D_2\nabla b - ab^2 + (\gamma + \kappa)a = 0
-#   \end{array}\right,
+# :math:`\frac{\partial a}{\partial t} - D_1\nabla a + ab^2 + \gamma a = \gamma`
+#
+# :math:`\frac{\partial b}{\partial t} - D_2\nabla b - ab^2 + (\gamma + \kappa)a = 0`
 #
 # for diffusion coefficients :math:`D_1,D_2>0` and reactivity
 # coefficients :math:`\gamma,\kappa>0`.

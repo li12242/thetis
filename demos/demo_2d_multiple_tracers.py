@@ -2,9 +2,9 @@
 # =============================
 #
 # The problem setup of this demo is almost identical to
-# `demo_2d_tracer`. The main difference is that it shows
-# how to treat the three advected quantities as separate
-# tracer fields.
+# `the first 2D tracer demo <demo_2d_tracer.py.html>`__.
+# The main difference is that it shows how to treat the
+# three advected quantities as separate tracer fields.
 
 from thetis import *
 
@@ -17,9 +17,9 @@ solver_obj = solver2d.FlowSolver2d(mesh2d, bathymetry2d)
 
 # Again, tracer functionality is activated by setting the
 # option ``solve_tracer = True`` and for this problem we
-# also set ``tracer_only = True``. In `demo_2d_tracer`, a
-# single tracer field was used, with the default name
-# `tracer_2d`. To specify separate tracers, we need to
+# also set ``tracer_only = True``. In the first 2D tracer
+# demo, a single tracer field was used, with the default
+# name `tracer_2d`. To specify separate tracers, we need to
 # provide labels, names and filenames for each, as well
 # as any source terms and boundary conditions. The 'label'
 # identifies the field inside Thetis. It should not contain
