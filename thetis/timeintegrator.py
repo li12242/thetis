@@ -442,16 +442,14 @@ class CoupledTracerPicard(TimeIntegrator):
     # TODO add more documentation
     def __init__(self, equations, solutions, fields, dt,
                  bnd_conditions=None, solver_parameters=None,
-                 solver_parameters_mom=None, theta=0.5, semi_implicit=False,
-                 iterations=2):
+                 theta=0.5, semi_implicit=False, iterations=2):
         """
-        :arg equations: :class:`AttrDict` of :class:`Equation` objects.
-        :arg solutions: :class:`AttrDict` of :class:`Function` objects.
-        :arg fields: Dictionary of fields that are passed to the equation
+        :arg equations: Dictionary of :class:`Equation` objects.
+        :arg solutions: Dictionary of :class:`Function` objects.
+        :arg fields: Dictionary of fields that are passed to each equation
         :arg float dt: time step in seconds
-        :kwarg dict bnd_conditions: Dictionary of boundary conditions passed to the equation
+        :kwarg dict bnd_conditions: Dictionary of boundary conditions passed to each equation
         :kwarg dict solver_parameters: PETSc solver options
-        :kwarg dict solver_parameters_mom: PETSc solver options for velocity solver
         :kwarg float theta: Implicitness parameter, default 0.5
         :kwarg bool semi_implicit: If True use a linearized semi-implicit scheme
         :kwarg int iterations: Number of Picard iterations
@@ -468,27 +466,28 @@ class CoupledTracerPicard(TimeIntegrator):
             self.solver_parameters.setdefault('snes_type', 'newtonls')
         self.iterations = iterations
 
-        self.solutions_old = AttrDict({
+        self.solutions_old = {
             tracer: Function(equations.function_space)
             for tracer, equation in self.equations.items()
-        })
+        }
         if iterations > 1:
-            self.solutions_lagged = AttrDict({
+            self.solutions_lagged = {
                 tracer: Function(equation.function_space)
                 for tracer, equation in self.equations.items()
-            })
+            }
         else:
             self.solutions_lagged = self.solutions_old
 
         # Create functions to hold the values of previous time step
-        self.fields_old = {}
-        for k in sorted(self.fields):
-            if self.fields[k] is not None:
-                if isinstance(self.fields[k], Function):
-                    self.fields_old[k] = Function(
-                        self.fields[k].function_space())
-                elif isinstance(self.fields[k], Constant):
-                    self.fields_old[k] = Constant(self.fields[k])
+        self.fields_old = {tracer: {} for tracer in self.fields}
+        for tracer, fields in self.fields.items():
+            for k in sorted(fields):
+                if fields[k] is not None:
+                    if isinstance(fields[k], Function):
+                        self.fields_old[k] = Function(
+                            fields[k].function_space())
+                    elif isinstance(fields[k], Constant):
+                        self.fields_old[k] = Constant(fields[k])
 
         if semi_implicit:
             solutions_nl = self.solutions_lagged
@@ -497,16 +496,19 @@ class CoupledTracerPicard(TimeIntegrator):
 
         # Forms
         theta_const = Constant(theta)
+        args = (
+            self.equations, self.solutions, self.solutions_old,
+            solutions_nl, fields, fields_old, bnd_conditions,
+        )
         self.forms = {
             tracer:
-                equation.mass_term(self.solutions[tracer]) - equation.mass_term(self.solutions_old[tracer])
+                eq.mass_term(sol) - eq.mass_term(sol_old)
                 - self.dt_const*(
-                    theta_const*equation.residual('all', self.solutions[tracer], solutions_nl[tracer], fields, fields, bnd_conditions)
-                    + (1-theta_const)*equation.residual('all', self.solutions_old[tracer], self.solutions_old[tracer], fields_old, fields_old, bnd_conditions)
+                    theta_const*eq.residual('all', sol, sol_nl, f, f, bnd)
+                    + (1-theta_const)*eq.residual('all', sol_old, sol_old, f_old, f_old, bnd)
                 )
-            for tracer, equation in self.equations.items()
+            for eq, sol, sol_old, sol_nl, f, f_old, bnd in zip(*args)
         }
-
         self.update_solver()
 
     def update_solver(self):
@@ -524,9 +526,9 @@ class CoupledTracerPicard(TimeIntegrator):
             for tracer, problem in problems.items()
         }
 
-    def initialize(self, solution):
+    def initialize(self, solutions):
         """Assigns initial conditions to all required fields."""
-        for tracer, solution in self.solutions:
+        for tracer, solution in solutions:
             self.solutions_old[tracer].assign(solution)
             self.solutions_lagged[tracer].assign(solution)
         for k in sorted(self.fields_old):
